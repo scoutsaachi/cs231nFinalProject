@@ -17,7 +17,8 @@ def getImagesAndLabels(pref="training"):
     labelfiles = ["%s%s" % (labelPath, f) for f in labelfiles]
     
     images = []
-    totalFiles = 100
+#     totalFiles = 10
+    totalFiles = len(imagefiles)
     validShape = (240, 320, 3)
     i_h, i_w, i_c = validShape
     labels = []
@@ -41,7 +42,6 @@ def getImagesAndLabels(pref="training"):
     std_pixel = images.std(axis=(1, 2, 3), keepdims=True)
     images = (images - mean_pixel)/std_pixel
     labels = [to_categorical(np.reshape(l, (240*320)), 8) for l in labels]
-    print(labels[0][0,0])
     labels = np.stack(labels, axis=0)
 #     images = np.split(images, images.shape[0], axis=0)
     return images, labels
@@ -101,4 +101,4 @@ def ConstructDataset(pref="training"):
 #     N = len(labels)
 #     iterator = _createDatasetIterator(dims, N)
 #     return imagefiles, labels, iterator
-getImagesAndLabels()
+# getImagesAndLabels()
