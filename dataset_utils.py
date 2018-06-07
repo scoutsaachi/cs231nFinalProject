@@ -3,6 +3,8 @@ import tensorflow as tf
 from os import listdir
 from os.path import isfile, join
 from scipy.ndimage import imread
+from keras.utils.np_utils import to_categorical
+
 
 STANFORD_PATH = "dataset/stanfordBackground"
 
@@ -15,21 +17,22 @@ def getImagesAndLabels(pref="training"):
     labelfiles = ["%s%s" % (labelPath, f) for f in labelfiles]
     
     images = []
-    totalFiles = 2
+    totalFiles = 100
     validShape = (240, 320, 3)
+    i_h, i_w, i_c = validShape
     labels = []
     for i in range(totalFiles):
         im = imread(imagefiles[i])
         label = np.loadtxt(labelfiles[i], delimiter=' ')
         h,w = im.shape[0], im.shape[1]
-        assert label.shape[0] == h and label.shape[1] == w
+        lh, lw = label.shape
+        assert lh == h and lw == w
         if im.shape != validShape:
             if h*w >= validShape[0]*validShape[1]:
                 im = np.resize(im, validShape)
                 label = np.resize(label, (validShape[0], validShape[1]))
             else:
                 continue
-        assert im.shape == validShape
         images.append(im)
         labels.append(label)
         
@@ -37,8 +40,10 @@ def getImagesAndLabels(pref="training"):
     mean_pixel = images.mean(axis=(1, 2, 3), keepdims=True)
     std_pixel = images.std(axis=(1, 2, 3), keepdims=True)
     images = (images - mean_pixel)/std_pixel
-    labels = np.stack(labels)
-    print(images.shape, labels.shape)
+    labels = [to_categorical(np.reshape(l, (240*320)), 8) for l in labels]
+    print(labels[0][0,0])
+    labels = np.stack(labels, axis=0)
+#     images = np.split(images, images.shape[0], axis=0)
     return images, labels
 
 class Dataset(object):
@@ -96,3 +101,4 @@ def ConstructDataset(pref="training"):
 #     N = len(labels)
 #     iterator = _createDatasetIterator(dims, N)
 #     return imagefiles, labels, iterator
+getImagesAndLabels()
