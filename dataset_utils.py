@@ -72,33 +72,3 @@ def ConstructDataset(pref="training"):
     X, y = getImagesAndLabels(pref)
     train_dset = Dataset(X, y, batch_size=50, shuffle=True)
     return train_dset
-
-# def _parseImage(imageFileName, label):
-#     image_decode = tf.image.decode_image(tf.read_file(imageFileName))
-#     return image_decode, label
-
-# def _createDatasetIterator(dims, N, batch_size, epochs):
-#     features_placeholder = tf.placeholder(tf.string, N)
-#     labels_placeholder = tf.placeholder(tf.float, dims)
-#     dataset = tf.data.Dataset.from_tensor_slices((features_placeholder, labels_placeholder))
-#     datset = dataset.map(_parseImage)
-#     dataset = dataset.batch(batch_size)
-#     dataset = dataset.repeat(epochs)
-#     iterator = dataset.make_initializable_iterator()
-#     return iterator
-
-# def getStanfordTrainingData():    
-#     path = "dataset/stanfordBackground"
-#     imagePath = "%s/trainingImages/" % path
-#     labelPath = "%s/trainingLabels/" % path
-#     imagefiles = [f for f in listdir(imagePath) if isfile(join(imagePath, f))]
-#     labelfiles = ["%s.regions.txt" % s.split('.')[0] for s in imagefiles]
-#     imagefiles = ["%s%s" % (imagePath, f) for f in imagefiles]
-#     labelfiles = ["%s%s" % (labelPath, f) for f in labelfiles]
-    
-#     labels = _readLabels(labelfiles)
-#     dims = labels[0].shape
-#     N = len(labels)
-#     iterator = _createDatasetIterator(dims, N)
-#     return imagefiles, labels, iterator
-# getImagesAndLabels()
