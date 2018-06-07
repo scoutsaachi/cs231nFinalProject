@@ -5,7 +5,30 @@ from keras.layers import LeakyReLU, MaxPooling2D, Input, Dense, Conv2DTranspose,
 from keras.models import Model, Sequential
 import tensorflow as tf
 from keras import regularizers
+import sys
+sys.path.insert(1, "crfasrnn_keras/src/")
+from crfasrnn_keras.src.crfrnn_layer import CrfRnnLayer
 
+def AddCRF_RNNToModel(model, dims, num_classes, freeze_model, outputLayer): # dims are just height and weight
+    inputs = model.input
+    outputs = model.get_layer(outputLayer).output
+    H, W = dims
+    if freeze_model:
+        for layer in model.layers:
+            layer.trainable = False
+    x = CrfRnnLayer(image_dims=(H, W),
+                         num_classes=num_classes,
+                         theta_alpha=160.,
+                         theta_beta=3.,
+                         theta_gamma=3.,
+                         num_iterations=10,
+                         name='crfrnn')([outputs, inputs])
+    x = Permute((2,1))(Reshape((-1, H*W))(x))
+    x = Activation('softmax')(x)
+    newmodel = Model(inputs=inputs, outputs=x)
+    print(newmodel.output_shape)
+    return newmodel
+    
 
 def CreateVGG16Model(input_shape, numClasses, regParam):
     H, W, C = input_shape
@@ -38,7 +61,7 @@ def CropToTarget(currShape, targetShape):
     diffHeight = int((currShape[1] - targetShape[0])/2)
     diffWidth = int((currShape[2] - targetShape[1])/2)
     print(diffWidth, diffHeight)
-    return Cropping2D((diffHeight, diffWidth))
+    return Cropping2D((diffHeight, diffWidth), name="Cropping")
 
 def CreateConvBlock(filters, num_convs, index, input_shape=None):
     layers = []
@@ -50,7 +73,7 @@ def CreateConvBlock(filters, num_convs, index, input_shape=None):
     layers.append(MaxPooling2D(pool_size=4, strides=2, padding='same', name="pool_%s" % index))
     return layers
     
-def CreateSimpleFCN(input_shape, numClasses):
+def CreateSimpleFCN(input_shape, numClasses, regParam):
     print(input_shape)
     H, W, C = input_shape
     layers = []
@@ -74,4 +97,7 @@ def CreateSimpleFCN(input_shape, numClasses):
     return model
 
 
-# CreateSimpleFCN((240, 320, 3), 8)
+
+m = CreateVGG16Model((240, 320, 3), 8, 0.001)
+newm = AddCRF_RNNToModel(m, (240, 320,), 8, False, "Cropping")
+print(newm.summary())

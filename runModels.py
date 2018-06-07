@@ -46,4 +46,5 @@ def runCrossValidation(modelName="VCG", lr=[0.001], regs=[0.001], batch=10, epoc
             results.append((l,r,val_acc))
             print("%s, %s, %s" % (l, r, val_acc))
 
-runCrossValidation("VCG", lr=[0.01, 0.001, 0.005], regs=[0.01, 0.001, 0.0001], epochs=5)
+# runCrossValidation("VCG", lr=[0.01, 0.001, 0.005], regs=[0.01, 0.001, 0.0001], epochs=5)
+runCrossValidation("Simple", lr=[0.1, 0.01, 0.001, 0.005], regs=[0.01], epochs=5)
