@@ -4,11 +4,45 @@ from os import listdir
 from os.path import isfile, join
 from scipy.ndimage import imread
 from keras.utils.np_utils import to_categorical
-
+from PIL import Image
 
 STANFORD_PATH = "dataset/stanfordBackground"
+WBC_PATH = "dataset/segmentation_WBC"
 
-def getImagesAndLabels(pref="training"):
+def getWBCImagesAndLabels(pref="training"):
+    imagePath = "%s/%sDataset/" % (WBC_PATH, pref)
+    labelPath = "%s/%sLabels/" % (WBC_PATH, pref)
+    imagefiles = [f for f in listdir(imagePath) if isfile(join(imagePath, f))]
+    labelfiles = ["%s.png" % s.split('.')[0] for s in imagefiles]
+    imagefiles = ["%s%s" % (imagePath, f) for f in imagefiles]
+    labelfiles = ["%s%s" % (labelPath, f) for f in labelfiles]
+    print(imagefiles[15])
+    totalFiles = len(imagefiles)
+    print(totalFiles)
+    validShape = (120, 120, 3)
+    images = []
+    labels = []
+    for i in range(totalFiles):
+        im = np.asarray(Image.open(imagefiles[i]))
+        label = imread(labelfiles[i])
+        h,w = im.shape[0], im.shape[1]
+        if im.shape != validShape:
+            im = np.resize(im, validShape)
+            label = np.resize(label, (validShape[0], validShape[1]))
+        label[label==255] = 1
+        label[label==128] = 2
+        images.append(im)
+        labels.append(label)
+    images = np.stack(images)
+    mean_pixel = images.mean(axis=(1, 2, 3), keepdims=True)
+    std_pixel = images.std(axis=(1, 2, 3), keepdims=True)
+    images = (images - mean_pixel)/std_pixel
+    labels = [to_categorical(np.reshape(l, (120*120)), 3) for l in labels]
+    labels = np.stack(labels, axis=0)
+    print(images.shape, labels.shape)
+    return images, labels
+
+def getStanfordImagesAndLabels(pref="training"):
     imagePath = "%s/%sImages/" % (STANFORD_PATH, pref)
     labelPath = "%s/%sLabels/" % (STANFORD_PATH, pref)
     imagefiles = [f for f in listdir(imagePath) if isfile(join(imagePath, f))]
@@ -17,7 +51,6 @@ def getImagesAndLabels(pref="training"):
     labelfiles = ["%s%s" % (labelPath, f) for f in labelfiles]
     
     images = []
-#     totalFiles = 10
     totalFiles = len(imagefiles)
     validShape = (240, 320, 3)
     i_h, i_w, i_c = validShape
@@ -36,14 +69,12 @@ def getImagesAndLabels(pref="training"):
                 continue
         images.append(im)
         labels.append(label)
-        
     images = np.stack(images)
     mean_pixel = images.mean(axis=(1, 2, 3), keepdims=True)
     std_pixel = images.std(axis=(1, 2, 3), keepdims=True)
     images = (images - mean_pixel)/std_pixel
     labels = [to_categorical(np.reshape(l, (240*320)), 8) for l in labels]
     labels = np.stack(labels, axis=0)
-#     images = np.split(images, images.shape[0], axis=0)
     return images, labels
 
 class Dataset(object):
@@ -72,3 +103,5 @@ def ConstructDataset(pref="training"):
     X, y = getImagesAndLabels(pref)
     train_dset = Dataset(X, y, batch_size=50, shuffle=True)
     return train_dset
+
+# getWBCStanfordImagesAndLabels()
